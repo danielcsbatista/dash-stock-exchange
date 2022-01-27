@@ -3,12 +3,15 @@ import Layout from './components/Layout';
 import GlobalStyles from './styles/GlobalStyles';
 import { ThemeProvider } from 'styled-components';
 import dark from './styles/Themes/dark';
+import Dashboard from './pages/Dashboard';
 
 const App: React.FC = () => {
   return (
     <ThemeProvider theme={dark}>
       <GlobalStyles />
-      <Layout />
+      <Layout>
+        <Dashboard />
+      </Layout>
     </ThemeProvider>
   );
 };
