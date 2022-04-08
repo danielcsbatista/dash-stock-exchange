@@ -1,18 +1,47 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import ContentHeader from '../../components/ContentHeader';
 import HistoryFinanceCard from '../../components/HistoryFinanceCard';
 import SelectInput from '../../components/SelectInput';
 import { Container, Content, Filters } from './styles';
 
+import gains from '../../repositories/gains';
+import expenses from '../../repositories/expenses';
+
+interface IData {
+  id: string;
+  description: string;
+  amountFormatted: string;
+  frequency: string;
+  dateFormatted: string;
+  tagColor: string;
+}
+
 const List: React.FC = () => {
   const { pathname } = useLocation();
+  const [data, setData] = useState<IData[]>([]);
 
   const title = useMemo(() => {
     return pathname.includes('entry-balance')
       ? { name: 'Entradas', lineColor: '#F7931B' }
       : { name: 'Saídas', lineColor: '#E44C4E' };
   }, [pathname]);
+
+  useEffect(() => {
+    const listData = pathname.includes('entry-balance') ? gains : expenses;
+    const mapList = listData.map((item) => {
+      return {
+        id: String(Math.random() * data.length),
+        description: item.description,
+        amountFormatted: item.amount,
+        frequency: item.frequency,
+        dateFormatted: item.date,
+        tagColor: item.frequency === 'recorrente' ? '#4e41f0' : '#E44C4E',
+      };
+    });
+    setData(mapList);
+  }, []);
+
   const months = [
     { label: 'julho', value: 7 },
     { label: 'agosto', value: 8 },
@@ -43,13 +72,13 @@ const List: React.FC = () => {
       </Filters>
 
       <Content>
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].map((card) => (
+        {data.map((card) => (
           <HistoryFinanceCard
-            key={card}
-            tagColor='#E44C4E'
-            title={`Salário ${card}`}
-            subTitle={'28/02/2022'}
-            amount='R$ 1.000,00'
+            key={card.id}
+            tagColor={card.tagColor}
+            title={card.description}
+            subTitle={card.dateFormatted}
+            amount={card.amountFormatted}
           />
         ))}
       </Content>
