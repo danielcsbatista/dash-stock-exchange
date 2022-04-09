@@ -7,6 +7,8 @@ import { Container, Content, Filters } from './styles';
 
 import gains from '../../repositories/gains';
 import expenses from '../../repositories/expenses';
+import formatCurrency from '../../utils/formatCurrency';
+import { formatDate } from '../../utils/date';
 
 interface IData {
   id: string;
@@ -20,6 +22,12 @@ interface IData {
 const List: React.FC = () => {
   const { pathname } = useLocation();
   const [data, setData] = useState<IData[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState<string>(
+    String(new Date().getMonth() + 1),
+  );
+  const [selectedYear, setSelectedYear] = useState<string>(
+    String(new Date().getFullYear()),
+  );
 
   const title = useMemo(() => {
     return pathname.includes('entry-balance')
@@ -27,20 +35,30 @@ const List: React.FC = () => {
       : { name: 'Saídas', lineColor: '#E44C4E' };
   }, [pathname]);
 
+  const listData = useMemo(() => {
+    return pathname.includes('entry-balance') ? gains : expenses;
+  }, [pathname]);
+
   useEffect(() => {
-    const listData = pathname.includes('entry-balance') ? gains : expenses;
-    const mapList = listData.map((item) => {
+    const filteredData = listData.filter((item) => {
+      const date = new Date(item.date);
+      const month = String(date.getMonth() + 1);
+      const year = String(date.getFullYear());
+      return month === selectedMonth && year === selectedYear;
+    });
+
+    const mapList = filteredData.map((item) => {
       return {
-        id: String(Math.random() * data.length),
+        id: String(new Date().getTime() + item.amount),
         description: item.description,
         amountFormatted: item.amount,
         frequency: item.frequency,
-        dateFormatted: item.date,
+        dateFormatted: formatDate(item.date),
         tagColor: item.frequency === 'recorrente' ? '#4e41f0' : '#E44C4E',
       };
     });
     setData(mapList);
-  }, []);
+  }, [listData, selectedMonth, selectedYear]);
 
   const months = [
     { label: 'julho', value: 7 },
@@ -57,8 +75,16 @@ const List: React.FC = () => {
   return (
     <Container>
       <ContentHeader title={title.name} lineColor={title.lineColor}>
-        <SelectInput options={months} />
-        <SelectInput options={years} />
+        <SelectInput
+          options={months}
+          onChange={(event) => setSelectedMonth(event.target.value)}
+          defaultValue={selectedMonth}
+        />
+        <SelectInput
+          options={years}
+          onChange={(event) => setSelectedYear(event.target.value)}
+          defaultValue={selectedYear}
+        />
       </ContentHeader>
 
       <Filters>
@@ -78,7 +104,7 @@ const List: React.FC = () => {
             tagColor={card.tagColor}
             title={card.description}
             subTitle={card.dateFormatted}
-            amount={card.amountFormatted}
+            amount={formatCurrency(card.amountFormatted)}
           />
         ))}
       </Content>
